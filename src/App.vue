@@ -166,9 +166,6 @@ export default {
       return {
          ticker: '',
          array: [
-            {name: 'demo1', price: '-1'},
-            {name: 'demo2', price: '-2'},
-            {name: 'demo3', price: '-3'},
          ],
          sel: null
       }
@@ -184,15 +181,18 @@ export default {
          if (this.checkInput()) {
             const newTicker = {
                name: this.ticker,
-               price: 'prise'
+               price: '-'
             }
             this.array.push(newTicker)
             
             setInterval(async () => {
-               const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=USD&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c,`)
+               const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
                const obj = await data.json()
-               console.log(obj)
-            },2000)
+               this.array.find(t => t.name === newTicker.name)
+                   .price = obj.USD >  1 ?
+                   obj.USD.toFixed(1) :
+                   obj.USD.toPrecision(1)
+            },3000)
             this.ticker = ''
          }
       },
@@ -200,8 +200,12 @@ export default {
          console.log(index)
          this.array = this.array.filter((i) => i !== index)
       },
-     
    },
+   watch: {
+      addObject() {
+         console.log('change')
+      }
+   }
 }
 </script>
 
