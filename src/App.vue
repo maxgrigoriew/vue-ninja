@@ -165,8 +165,7 @@ export default {
    data() {
       return {
          ticker: '',
-         array: [
-         ],
+         array: [],
          sel: null
       }
    },
@@ -189,10 +188,10 @@ export default {
                const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
                const obj = await data.json()
                this.array.find(t => t.name === newTicker.name)
-                   .price = obj.USD >  1 ?
+                   .price = obj.USD > 1 ?
                    obj.USD.toFixed(1) :
                    obj.USD.toPrecision(1)
-            },3000)
+            }, 3000)
             this.ticker = ''
          }
       },
