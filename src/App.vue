@@ -37,7 +37,7 @@
               CHD
             </span>
                   </div>
-                  <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+                  <div v-if="!checkInput()" class="text-sm text-red-600">Такой тикер уже добавлен</div>
                </div>
             </div>
             <button
@@ -45,7 +45,6 @@
                 @click="addObject"
                 class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
-               <!-- Heroicon name: solid/mail -->
                <svg
                    class="-ml-0.5 mr-2 h-6 w-6"
                    xmlns="http://www.w3.org/2000/svg"
@@ -60,14 +59,43 @@
                </svg>
                Добавить
             </button>
-         </section>
-         <template v-if="array.length !== 0">
             <hr class="w-full border-t border-gray-600 my-4"/>
+            <div class="buttons">
+               <button
+                   type="button"
+                   style="margin-right: 1rem"
+                   class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+               >
+                  Вперед
+               </button>
+               <button
+                   type="button"
+                   class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+               >
+                  Вперед
+               </button>
+               <div>
+                  Фильтр:
+                  <input
+                      type="text"
+                      v-model="filter"
+                  >
+               </div>
+               <div v-if="emptySearch"
+                   style="text-align: center">
+                  Ничего не найдено
+               </div>
+            </div>
+         </section>
+         <template v-if="arrayTickers.length !== 0">
+            <hr class="w-full border-t border-gray-600 my-4"
+                v-if="!emptySearch"
+            />
             <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                <div
-                   v-for="(item) in array"
+                   v-for="(item) in filtredTickers()"
                    @click="sel = item"
-                   :key="item"
+                   :key="item.name"
                    :class="{
                    'border-4': sel == item
                 }"
@@ -103,7 +131,9 @@
                   </button>
                </div>
             </dl>
-            <hr class="w-full border-t border-gray-600 my-4"/>
+            <hr class="w-full border-t border-gray-600 my-4"
+                v-if="!emptySearch"
+            />
             <section
                 v-if="sel"
                 class="relative">
@@ -161,17 +191,40 @@
 
 export default {
    name: 'App',
-   components: {},
    data() {
       return {
          ticker: '',
-         array: [],
-         sel: null
+         arrayTickers: [
+            {name:'iPhone 7', company:'Apple'},
+            {name:'iPhone 6S', company:'Apple'},
+            {name:'Galaxy S8', company:'Samsung'},
+            {name:'Galaxy S7 Edge', company:'Samsung'},
+         ],
+         sel: null,
+         errorText: false,
+         filter: '',
+         page: 1,
+         emptySearch: false
       }
    },
    methods: {
+      filtredTickers() {
+         return this.arrayTickers.filter(ticker => {
+               if(this.filter === '') {
+                  console.log('emptySearch = false')
+                  return true
+               }
+               else if(ticker.name.indexOf(this.filter) > -1){
+                  this.emptySearch = false
+                  console.log('emptySearch = true')
+                  return ticker.name.indexOf(this.filter) > -1
+               } else if(ticker.name.indexOf(this.filter) <= -1){
+                  this.emptySearch = true
+               }
+         })
+      },
       checkInput() {
-         if (this.ticker.length !== 0) {
+         if (this.ticker.length !== 0 && !this.arrayTickers.includes(this.filter)) {
             return true
          }
          return false
@@ -182,12 +235,12 @@ export default {
                name: this.ticker,
                price: '-'
             }
-            this.array.push(newTicker)
-            
+            this.arrayTickers.push(newTicker)
+            this.filter = ''
             setInterval(async () => {
                const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
                const obj = await data.json()
-               this.array.find(t => t.name === newTicker.name)
+               this.arrayTickers.find(t => t.name === newTicker.name)
                    .price = obj.USD > 1 ?
                    obj.USD.toFixed(1) :
                    obj.USD.toPrecision(1)
@@ -195,19 +248,19 @@ export default {
             this.ticker = ''
          }
       },
-      handelDelete(index) {
-         console.log(index)
-         this.array = this.array.filter((i) => i !== index)
+      handelDelete(item) {
+         this.arrayTickers = this.arrayTickers.filter(i => i !== item)
       },
    },
-   watch: {
-      addObject() {
-         console.log('change')
-      }
-   }
 }
 </script>
 
 <style src="./assets/css/app.css">
-
+.icon {
+   transform: rotate(90deg);
+   display: none;
+}
+body {
+   display: none;
+}
 </style>
