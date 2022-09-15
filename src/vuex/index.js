@@ -1,7 +1,7 @@
 import {createStore} from 'vuex'
 import axios from 'axios'
 
-const store = createStore({
+export default  createStore({
     state: {
         count: 123,
         users: ['users']
@@ -28,5 +28,3 @@ const store = createStore({
         }
     }
 })
-
-export {store}

@@ -1,18 +1,14 @@
 <template>
    <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
       <div class="container">
+         <div>
+            test: {{ testLett }}
+         </div>
          <section>
-            <div>
-<!--            store: {{$store.state.count}}-->
-<!--            users: {{$store.state.users}}-->
-               getUsers: {{getUsers}}
-            </div>
             <div class="flex">
                <div class="max-w-xs">
                   <div>{{ ticker }}</div>
-                  <label for="wallet" class="block text-sm font-medium text-gray-700"
-                  >Тикер</label
-                  >
+                  <label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
                   <div class="mt-1 relative rounded-md shadow-md">
                      <input
                          v-model.trim="ticker"
@@ -87,7 +83,7 @@
                   >
                </div>
                <div v-if="emptySearch"
-                   style="text-align: center">
+                    style="text-align: center">
                   Ничего не найдено
                </div>
             </div>
@@ -98,7 +94,7 @@
             />
             <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                <div
-                   v-for="(item) in filtredTickers()"
+                   v-for="(item) in arrayTickers"
                    @click="sel = item"
                    :key="item.name"
                    :class="{
@@ -166,37 +162,43 @@ export default {
       return {
          ticker: '',
          arrayTickers: [
-            {name:'iPhone 7', company:'Apple'},
-            {name:'iPhone 6S', company:'Apple'},
-            {name:'Galaxy S8', company:'Samsung'},
-            {name:'Galaxy S7 Edge', company:'Samsung'},
+            {name: 'iPhone 7', company: 'Apple'},
+            {name: 'iPhone 6S', company: 'Apple'},
          ],
          sel: null,
          errorText: false,
          filter: '',
          page: 1,
          emptySearch: false,
-         users: []
+         users: [],
+         testLett: 'test'
       }
    },
    methods: {
+      subscribeToUpdate({name}) {
+         setInterval(async () => {
+            const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
+            const obj = await data.json()
+            this.arrayTickers.find(t => t.name === name)
+                .price = obj.USD > 1 ?
+                obj.USD.toFixed(1) :
+                obj.USD.toPrecision(1)
+         }, 3000)
+      },
       filtredTickers() {
          return this.arrayTickers.filter(ticker => {
-               if(this.filter === '') {
-                  console.log('emptySearch = false')
-                  return true
-               }
-               else if(ticker.name.indexOf(this.filter) > -1){
-                  this.emptySearch = false
-                  console.log('emptySearch = true')
-                  return ticker.name.indexOf(this.filter) > -1
-               } else if(ticker.name.indexOf(this.filter) <= -1){
-                  this.emptySearch = true
-               }
+            if (this.filter === '') {
+               return true
+            } else if (ticker.name.indexOf(this.filter) > -1) {
+               this.emptySearch = false
+               return ticker.name.indexOf(this.filter) > -1
+            } else if (ticker.name.indexOf(this.filter) <= -1) {
+               this.emptySearch = true
+            }
          })
       },
       checkInput() {
-         if (this.ticker.length !== 0 && !this.arrayTickers.includes(this.filter)) {
+         if (this.ticker && !this.arrayTickers.includes(this.filter)) {
             return true
          }
          return false
@@ -208,29 +210,25 @@ export default {
                price: '-'
             }
             this.arrayTickers.push(newTicker)
+            localStorage.setItem('tickers', JSON.stringify(this.arrayTickers))
             this.filter = ''
-            setInterval(async () => {
-               const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
-               const obj = await data.json()
-               this.arrayTickers.find(t => t.name === newTicker.name)
-                   .price = obj.USD > 1 ?
-                   obj.USD.toFixed(1) :
-                   obj.USD.toPrecision(1)
-            }, 3000)
+            this.subscribeToUpdate(newTicker)
             this.ticker = ''
          }
       },
       handelDelete(item) {
          this.arrayTickers = this.arrayTickers.filter(i => i !== item)
+         localStorage.setItem('tickers', JSON.stringify(this.arrayTickers))
       },
    },
-   computed: {
-      getUsers() {
-         return this.$store.getters.getUsers
+   created() {
+      const tickers = localStorage.getItem('tickers')
+      if(tickers) {
+         this.arrayTickers = JSON.parse(localStorage.getItem('tickers'))
       }
-   },
-   async mounted() {
-      this.$store.dispatch('getUsers')
+      this.arrayTickers.forEach(item => {
+         this.subscribeToUpdate(item)
+      })
    }
 }
 </script>
