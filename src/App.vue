@@ -63,13 +63,15 @@
             <hr class="w-full border-t border-gray-600 my-4"/>
             <div class="buttons">
                <button
+                   @click="prevPage"
                    type="button"
                    style="margin-right: 1rem"
                    class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                >
-                  Вперед
+                  Назад
                </button>
                <button
+                   @click="nextPage"
                    type="button"
                    class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                >
@@ -94,7 +96,7 @@
             />
             <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                <div
-                   v-for="(item) in arrayTickers"
+                   v-for="(item) in filtredTickers()"
                    @click="sel = item"
                    :key="item.name"
                    :class="{
@@ -175,17 +177,28 @@ export default {
       }
    },
    methods: {
-      subscribeToUpdate({name}) {
+      nextPage() {
+         this.page = this.page + 1
+         console.log(this.page)
+      },
+      prevPage() {
+         this.page = this.page - 1
+      },
+      subscribeToUpdate(ticker) {
          setInterval(async () => {
-            const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
+            const data = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${ticker.name}&tsyms=USD&api_key=b21a3093554703d4653f805d40ebd670ada5fb329486ecb44cae07d4f7b45b1c`)
             const obj = await data.json()
-            this.arrayTickers.find(t => t.name === name)
+            this.arrayTickers.find(t => t.name === ticker.name)
                 .price = obj.USD > 1 ?
                 obj.USD.toFixed(1) :
                 obj.USD.toPrecision(1)
          }, 3000)
       },
       filtredTickers() {
+         let start= (this.page - 1 ) * 6
+         let end = (this.page * 6)
+         
+         
          return this.arrayTickers.filter(ticker => {
             if (this.filter === '') {
                return true
@@ -195,7 +208,7 @@ export default {
             } else if (ticker.name.indexOf(this.filter) <= -1) {
                this.emptySearch = true
             }
-         })
+         }).slice(start, end)
       },
       checkInput() {
          if (this.ticker && !this.arrayTickers.includes(this.filter)) {
